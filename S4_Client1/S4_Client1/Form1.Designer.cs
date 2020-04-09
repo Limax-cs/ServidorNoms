@@ -39,6 +39,8 @@
             this.Desconnectar_btn = new System.Windows.Forms.Button();
             this.Palindrom_rb = new System.Windows.Forms.RadioButton();
             this.MAjuscules_rb = new System.Windows.Forms.RadioButton();
+            this.Consultes_lbl = new System.Windows.Forms.Label();
+            this.Consultes_btn = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -150,11 +152,32 @@
             this.MAjuscules_rb.Text = "Retornem el nom en Majúscules";
             this.MAjuscules_rb.UseVisualStyleBackColor = true;
             // 
+            // Consultes_lbl
+            // 
+            this.Consultes_lbl.AutoSize = true;
+            this.Consultes_lbl.Location = new System.Drawing.Point(245, 382);
+            this.Consultes_lbl.Name = "Consultes_lbl";
+            this.Consultes_lbl.Size = new System.Drawing.Size(86, 17);
+            this.Consultes_lbl.TabIndex = 11;
+            this.Consultes_lbl.Text = "Consultes: 0";
+            // 
+            // Consultes_btn
+            // 
+            this.Consultes_btn.Location = new System.Drawing.Point(142, 338);
+            this.Consultes_btn.Name = "Consultes_btn";
+            this.Consultes_btn.Size = new System.Drawing.Size(97, 82);
+            this.Consultes_btn.TabIndex = 12;
+            this.Consultes_btn.Text = "Número de consultes";
+            this.Consultes_btn.UseVisualStyleBackColor = true;
+            this.Consultes_btn.Click += new System.EventHandler(this.Consultes_btn_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(735, 493);
+            this.Controls.Add(this.Consultes_btn);
+            this.Controls.Add(this.Consultes_lbl);
             this.Controls.Add(this.MAjuscules_rb);
             this.Controls.Add(this.Palindrom_rb);
             this.Controls.Add(this.Desconnectar_btn);
@@ -186,6 +209,8 @@
         private System.Windows.Forms.Button Desconnectar_btn;
         private System.Windows.Forms.RadioButton Palindrom_rb;
         private System.Windows.Forms.RadioButton MAjuscules_rb;
+        private System.Windows.Forms.Label Consultes_lbl;
+        private System.Windows.Forms.Button Consultes_btn;
     }
 }
 

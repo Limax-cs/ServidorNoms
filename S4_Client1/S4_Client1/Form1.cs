@@ -138,5 +138,19 @@ namespace S4_Client1
             server.Shutdown(SocketShutdown.Both);
             server.Close();
         }
+
+        private void Consultes_btn_Click(object sender, EventArgs e)
+        {
+            string missatge = "6/";
+            //Enviem al servidor un nom de teclat
+            byte[] msg = System.Text.Encoding.ASCII.GetBytes(missatge);
+            server.Send(msg);
+
+            //Rebem la resposta del servidor
+            byte[] msg2 = new byte[80];
+            server.Receive(msg2);
+            missatge = Encoding.ASCII.GetString(msg2).Split('\0')[0];
+            Consultes_lbl.Text = "Consultes: " + missatge;
+        }
     }
 }
