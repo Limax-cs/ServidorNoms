@@ -8,15 +8,19 @@ using System.Text;
 using System.Windows.Forms;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace S4_Client1
 {
     public partial class Form1 : Form
     {
         Socket server;
+        Thread atendre;
+
         public Form1()
         {
             InitializeComponent();
+            CheckForIllegalCrossThreadCalls = false; //Inhabilita el bloqueig de modificacions d'objectes d'altres threads
         }
 
         private void textBox2_TextChanged(object sender, EventArgs e)
@@ -26,78 +30,31 @@ namespace S4_Client1
 
         private void Enviar_btn_Click(object sender, EventArgs e)
         {
+            string missatge = "missatge";
+            bool opcio_viable = true;
+
             if (Longitud_rb.Checked)
-            {
-                string missatge = "1/" + Nom_tb.Text;
-                //Enviem al servidor un nom de teclat
-                byte[] msg = System.Text.Encoding.ASCII.GetBytes(missatge);
-                server.Send(msg);
-
-                //Rebem la resposta del servidor
-                byte[] msg2 = new byte[80];
-                server.Receive(msg2);
-                missatge = Encoding.ASCII.GetString(msg2).Split('\0')[0];
-                MessageBox.Show("La longitud del teu nom és: " + missatge);
-            }
+                missatge = "1/" + Nom_tb.Text;
             else if (Bonic_rb.Checked)
-            {
-                string missatge = "2/" + Nom_tb.Text;
-                //Enviem al servidor un nom de teclat
-                byte[] msg = System.Text.Encoding.ASCII.GetBytes(missatge);
-                server.Send(msg);
-
-                //Rebem la resposta del servidor
-                byte[] msg2 = new byte[80];
-                server.Receive(msg2);
-                missatge = Encoding.ASCII.GetString(msg2).Split('\0')[0];
-                if (missatge == "SI")
-                    MessageBox.Show("El teu nom és bonic");
-                else
-                    MessageBox.Show("El teu nom és lleig");
-            }
+                missatge = "2/" + Nom_tb.Text;
             else if (Altura_rb.Checked)
-            {
-                string missatge = "3/" + Nom_tb.Text + "/" + Altura_tb.Text;
-                //Enviem al servidor un nom de teclat
-                byte[] msg = System.Text.Encoding.ASCII.GetBytes(missatge);
-                server.Send(msg);
-
-                //Rebem la resposta del servidor
-                byte[] msg2 = new byte[80];
-                server.Receive(msg2);
-                missatge = Encoding.ASCII.GetString(msg2).Split('\0')[0];
-                MessageBox.Show(missatge);
-            }
+                missatge = "3/" + Nom_tb.Text + "/" + Altura_tb.Text;
             else if (Palindrom_rb.Checked)
-            {
-                string missatge = "4/" + Nom_tb.Text;
-                //Enviem al servidor un nom de teclat
-                byte[] msg = System.Text.Encoding.ASCII.GetBytes(missatge);
-                server.Send(msg);
-
-                //Rebem la resposta del servidor
-                byte[] msg2 = new byte[80];
-                server.Receive(msg2);
-                missatge = Encoding.ASCII.GetString(msg2).Split('\0')[0];
-                if (missatge == "SI")
-                    MessageBox.Show("El teu nom és palíndrom");
-                else if (missatge == "NO")
-                    MessageBox.Show("El teu nom no és palíndrom");
-                else
-                    MessageBox.Show("El teu nom és palíndrom però hi ha diferència entre majúscules i minúscules");
-            }
+                missatge = "4/" + Nom_tb.Text;
+            else if (MAjuscules_rb.Checked)
+                missatge = "5/" + Nom_tb.Text;
             else
             {
-                string missatge = "5/" + Nom_tb.Text;
-                //Enviem al servidor un nom de teclat
+                opcio_viable = false;
+                MessageBox.Show("No has triat ninguna opció");
+            }
+
+
+            //Enviem al servidor un nom de teclat
+            if (opcio_viable)
+            {
                 byte[] msg = System.Text.Encoding.ASCII.GetBytes(missatge);
                 server.Send(msg);
-
-                //Rebem la resposta del servidor
-                byte[] msg2 = new byte[80];
-                server.Receive(msg2);
-                missatge = Encoding.ASCII.GetString(msg2).Split('\0')[0];
-                MessageBox.Show("El nom en Majúscules és: " + missatge);
             }
         }
 
@@ -123,6 +80,11 @@ namespace S4_Client1
                 MessageBox.Show("No s'ha pogut connectar amb el servidor:" + ex);
                 return;
             }
+
+            //Creem el Thread
+            ThreadStart ts = delegate { AtendreServidor(); };
+            atendre = new Thread(ts);
+            atendre.Start();
         }
 
         private void Desconnectar_btn_Click(object sender, EventArgs e)
@@ -132,6 +94,7 @@ namespace S4_Client1
             //Enviem al servidor un nom de teclat
             byte[] msg = System.Text.Encoding.ASCII.GetBytes(missatge);
             server.Send(msg);
+            atendre.Abort();
 
             //Ens desconnectem
             this.BackColor = Color.Gray;
@@ -139,18 +102,53 @@ namespace S4_Client1
             server.Close();
         }
 
-        private void Consultes_btn_Click(object sender, EventArgs e)
+        private void AtendreServidor()
         {
-            string missatge = "6/";
-            //Enviem al servidor un nom de teclat
-            byte[] msg = System.Text.Encoding.ASCII.GetBytes(missatge);
-            server.Send(msg);
+            while (true)
+            {
+                //Rebem la resposta del servidor
+                byte[] msg2 = new byte[80];
+                server.Receive(msg2);
+                string[] troços = Encoding.ASCII.GetString(msg2).Split('/');
+                int codi = Convert.ToInt32(troços[0]);
+                string missatge = troços[1].Split('\0')[0];
 
-            //Rebem la resposta del servidor
-            byte[] msg2 = new byte[80];
-            server.Receive(msg2);
-            missatge = Encoding.ASCII.GetString(msg2).Split('\0')[0];
-            Consultes_lbl.Text = "Consultes: " + missatge;
+                switch(codi)
+                {
+                    case 1: //Resposta a la longitud del nom
+                        MessageBox.Show("La longitud del teu nom és: " + missatge);
+                    break;
+
+                    case 2: //Resposta al nom bonic
+                        if (missatge == "SI")
+                            MessageBox.Show("El teu nom és bonic");
+                        else
+                            MessageBox.Show("El teu nom és lleig");
+                    break;
+
+                    case 3: //Resposta a l'altura
+                        MessageBox.Show(missatge);
+                    break;
+
+                    case 4: //Resposta al nom palíndrom
+                        if (missatge == "SI")
+                            MessageBox.Show("El teu nom és palíndrom");
+                        else if (missatge == "NO")
+                            MessageBox.Show("El teu nom no és palíndrom");
+                        else
+                            MessageBox.Show("El teu nom és palíndrom però hi ha diferència entre majúscules i minúscules");
+                    break;
+
+                    case 5: //Resposta al nom en majúscules
+                        MessageBox.Show("El nom en Majúscules és: " + missatge);
+                    break;
+
+                    case 6: //Resposta a la notificació de consultes
+                        Consultes_lbl.Text = "Consultes: " + missatge;
+                    break;
+                }
+               
+            }
         }
     }
 }
