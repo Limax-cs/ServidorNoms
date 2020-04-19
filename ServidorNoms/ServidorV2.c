@@ -11,11 +11,14 @@
 int contador=0;
 pthread_mutex_t mutex;
 
-void *AtendreClient (void* sockets)
+int i;
+int sockets[100];
+
+void *AtendreClient (void* socket)
 {
 	int sock_conn, ret;
 	int *s;
-	s = (int *) sockets;
+	s = (int *) socket;
 	sock_conn = *s;
 	
 	char peticio [512];
@@ -37,6 +40,7 @@ void *AtendreClient (void* sockets)
 		
 		if (codi == 0)
 			acabar = 1;
+		/*
 		else if (codi == 6)
 		{
 			pthread_mutex_lock(&mutex);
@@ -47,6 +51,7 @@ void *AtendreClient (void* sockets)
 			//Envia la resposta i tanca la connexió
 			write (sock_conn, resposta, strlen(resposta));
 		}
+		*/
 		else
 		{
 			p = strtok(NULL,"/");
@@ -56,23 +61,23 @@ void *AtendreClient (void* sockets)
 			
 			if (codi == 1)
 			{
-				sprintf(resposta, "%d,", strlen(nom));
+				sprintf(resposta, "1/%d,", (int) strlen(nom));
 			}
 			else if (codi == 2)
 			{
 				if((nom[0] == 'M') || (nom[0] == 'J'))
-					strcpy(resposta,"SI");
+					strcpy(resposta,"2/SI");
 				else
-					strcpy(resposta,"NO");
+					strcpy(resposta,"2/NO");
 			}
 			else if (codi == 3)
 			{
 				p = strtok(NULL,"/");
 				float altura = atof (p);
 				if (altura > 1.70)
-					sprintf(resposta,"%s: ets alt", nom);
+					sprintf(resposta,"3/%s: ets alt", nom);
 				else
-					sprintf(resposta,"%s: ets baix", nom);
+					sprintf(resposta,"3/%s: ets baix", nom);
 			}
 			else if (codi == 4)
 			{
@@ -91,11 +96,11 @@ void *AtendreClient (void* sockets)
 					i++;
 				}
 				if (Palindrom == 0)
-					sprintf(resposta, "NO");
+					sprintf(resposta, "4/NO");
 				else if (Palindrom == 1)
-					sprintf(resposta, "SI");
+					sprintf(resposta, "4/SI");
 				else
-					sprintf(resposta, "Sí-NoMajusc");
+					sprintf(resposta, "4/Sí-NoMajusc");
 			}
 			else if (codi == 5)
 			{
@@ -103,7 +108,7 @@ void *AtendreClient (void* sockets)
 				for(int i = 0; i < strlen(nom); i++)
 					nomMajus[i] = toupper(nom[i]);
 				nomMajus[strlen(nom)] = '\0';
-				sprintf(resposta,"%s",(nomMajus));
+				sprintf(resposta,"5/%s",(nomMajus));
 			}
 			
 			if ((codi == 1)||(codi == 2)||(codi == 3)||(codi == 4)||(codi == 5))
@@ -111,6 +116,12 @@ void *AtendreClient (void* sockets)
 				pthread_mutex_lock(&mutex);
 				contador++;
 				pthread_mutex_unlock(&mutex);
+				//Enviar la notificació al client
+				char notification [20];
+				sprintf(notification, "6/%d",contador);
+				int j;
+				for(j=0;j<i;j++)
+					write (sockets[j], notification, strlen(notification));
 			}
 			
 			printf("Resposta: %s \n",resposta);
@@ -150,9 +161,8 @@ int main(int argc, char *argv[]) {
 	if (listen(sock_listen, 3) < 0)
 		printf("Error en el listen");
 	
-	int i;
+
 	pthread_t thread[100];
-	int sockets[100];
 	//Comencem amb el bucle
 	
 	for (i = 0;i<5;i++) {
